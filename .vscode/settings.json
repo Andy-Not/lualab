@@ -1,0 +1,7 @@
+{
+    "Lua.diagnostics.globals": [
+        "instance",
+        "self",
+        "c8"
+    ]
+}
