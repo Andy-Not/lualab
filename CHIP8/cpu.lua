@@ -74,11 +74,30 @@ end
 -- OPCODE IMPLEMENTATION BELOW -- 
 
 -- Begins the decode process of decoding the opcodes. 
+-- function Cpu:decode()
+--     -- Correctly read two bytes and combine them into a 16-bit instruction
+--     local highByte = self.memory:readByte(self.PC)
+--     local lowByte = self.memory:readByte(self.PC + 1)
+--     local instruction = (highByte << 8) | lowByte  -- Combine to form 16-bit instruction
+
+--     -- Extract opcode components
+--     local n = (instruction >> 12) & 0x0F
+--     local nnn = instruction & 0x0FFF
+--     local x = (instruction >> 8) & 0x0F
+--     local y = (instruction >> 4) & 0x0F
+--     local kk = instruction & 0x00FF
+--     self:processOpcode(n, nnn, x, y, kk)
+
+-- end
+
 function Cpu:decode()
     -- Correctly read two bytes and combine them into a 16-bit instruction
     local highByte = self.memory:readByte(self.PC)
     local lowByte = self.memory:readByte(self.PC + 1)
     local instruction = (highByte << 8) | lowByte  -- Combine to form 16-bit instruction
+
+    -- Store the instruction in self.instruction
+    self.instruction = instruction
 
     -- Extract opcode components
     local n = (instruction >> 12) & 0x0F
@@ -87,7 +106,6 @@ function Cpu:decode()
     local y = (instruction >> 4) & 0x0F
     local kk = instruction & 0x00FF
     self:processOpcode(n, nnn, x, y, kk)
-
 end
 
 function Cpu:processOpcode(n, nnn, x, y, kk)
@@ -115,6 +133,8 @@ function Cpu:decodeZero(nnn)
     local lastChar = (nnn & 0x000F)
     if lastChar == 0x0 then 
         -- then clear the display
+        self.memory:clearDisplay()
+        print("Clearing display!")
         self.PC = self.PC + 2
         return
     end
@@ -173,6 +193,7 @@ function Cpu:decodeSeven(x, kk)
     self.registers[x] = ((self.registers[x] + kk) & 0xFF)
     self.PC = self.PC + 2
 end
+
 
 function Cpu:decodeEight(nnn, x, y) 
     local lastFourBits = (nnn & 0x000F)
@@ -275,13 +296,27 @@ function Cpu:decodeEight(nnn, x, y)
     --     return
     -- end
 
+    -- if lastFourBits == 0x7 then -- 8xy7
+    --     if self.registers[y] > self.registers[x] then self.registers[0xF] = 1
+    --     else self.registers[0xF] = 0 end
+    --     self.registers[x] = self.registers[y] - self.registers[x]
+    --     self.PC = self.PC + 2
+    --     return
+    -- end
+
     if lastFourBits == 0x7 then -- 8xy7
-        if self.registers[y] > self.registers[x] then self.registers[0xF] = 1
-        else self.registers[0xF] = 0 end
-        self.registers[x] = self.registers[y] - self.registers[x]
+        -- Set VF to 0 if there is a borrow (if Vy < Vx), else set it to 1
+        if self.registers[y] >= self.registers[x] then
+            self.registers[0xF] = 1
+        else
+            self.registers[0xF] = 0
+        end
+        -- Perform subtraction Vy - Vx and store in Vx, masking to 8 bits
+        self.registers[x] = (self.registers[y] - self.registers[x]) & 0xFF
         self.PC = self.PC + 2
         return
     end
+    
 
     if lastFourBits == 0xE then -- 8xyE
         -- Set VF to the most significant bit of reg x (bit 7)
@@ -337,34 +372,46 @@ function Cpu:decodeC(x, kk)
 end
 
 function Cpu:decodeD(nnn, x, y)
-    -- Extract the last nibble of nnn for height
     local n = nnn & 0x000F
-    local startX = self.registers[x] & 0xFF -- X coordinate, ensuring it’s within 0-255
-    local startY = self.registers[y] & 0xFF -- Y coordinate, ensuring it’s within 0-255
-    self.registers[0xF] = 0 -- Reset VF (collision flag)
+    local startX = self.registers[x] & 0xFF
+    local startY = self.registers[y] & 0xFF
+    self.registers[0xF] = 0
 
     for row = 0, n - 1 do
-        -- Read a byte of sprite data
         local spriteByte = self.memory:readByte(self.regI + row)
-        
-        for col = 0, 7 do -- Each byte has 8 bits representing 8 pixels in a row
-            local pixelX = (startX + col) % 64 -- Wrap around horizontally
-            local pixelY = (startY + row) % 32 -- Wrap around vertically
+        print("Processing sprite byte at row", row, ":", spriteByte)
 
-            -- Get the bit in the current sprite byte. Shift right by (7 - col) to get the current bit.
+        for col = 0, 7 do
+            local pixelX = (startX + col) % 64
+            local pixelY = (startY + row) % 32
             local spritePixel = (spriteByte >> (7 - col)) & 1
 
-            -- Check if the current display pixel is on and a sprite pixel is also on (XOR collision)
-            if spritePixel == 1 and self.memory.displayBuffer[pixelY * 64 + pixelX] == 1 then
-                self.registers[0xF] = 1 -- Set collision flag (VF) to 1 if there's a collision
+            local bufferIndex = pixelY * 64 + pixelX
+            local displayPixel = self.memory.displayBuffer[bufferIndex]
+
+            if spritePixel == 1 and displayPixel == 1 then
+                self.registers[0xF] = 1
             end
 
-            -- XOR the sprite pixel onto the display
-            self.memory.displayBuffer[pixelY * 64 + pixelX] = self.memory.displayBuffer[pixelY * 64 + pixelX] ~ spritePixel
+            -- XOR the sprite pixel onto the display buffer
+            self.memory.displayBuffer[bufferIndex] = displayPixel ~ spritePixel 
+            print("Updated pixel at", bufferIndex, "to:", self.memory.displayBuffer[bufferIndex])
+
+            -- Print the entire display buffer after each pixel update
+            print("Current Display Buffer:")
+            for i = 1, #self.memory.displayBuffer do
+                io.write(self.memory.displayBuffer[i] .. " ")
+                -- Print a new line every 64 pixels for readability
+                if i % 64 == 0 then io.write("\n") end
+            end
+            print("\n") -- Separate each update for clarity
         end
     end
+
     self.PC = self.PC + 2
 end
+
+
 
 -- function Cpu:decodeD(nnn, x, y)
 --     -- Need to implement stil. Is used for writing to screen and stuff 
@@ -386,7 +433,7 @@ function Cpu:decodeF(nnn, x, y, kk)
     end
 
     if lowerByte == 0x0A then 
-        self.paused = true
+        -- self.paused = true -- enable this later again once keyboard IO is implemented
         self.PC = self.PC + 2
         return
     end
@@ -427,6 +474,24 @@ function Cpu:decodeF(nnn, x, y, kk)
         self.memory:writeByte(self.regI + 1, tens)
         self.memory:writeByte(self.regI + 2, ones)
     
+        self.PC = self.PC + 2
+        return
+    end
+
+    if lowerByte == 0x55 then 
+        -- Write the values in registers V0 to Vx to memory starting at address regI
+        for i = 0, x do
+            self.memory:writeByte(self.regI + i, self.registers[i])
+        end
+        self.PC = self.PC + 2
+        return
+    end
+
+    if lowerByte == 0x65 then 
+        -- Read values from memory starting at address regI to registers V0 to Vx
+        for i = 0, x do
+            self.registers[i] = self.memory:readByte(self.regI + i)
+        end
         self.PC = self.PC + 2
         return
     end
