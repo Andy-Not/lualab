@@ -337,8 +337,39 @@ function Cpu:decodeC(x, kk)
 end
 
 function Cpu:decodeD(nnn, x, y)
-    -- Need to implement stil. Is used for writing to screen and stuff 
+    -- Extract the last nibble of nnn for height
+    local n = nnn & 0x000F
+    local startX = self.registers[x] & 0xFF -- X coordinate, ensuring it’s within 0-255
+    local startY = self.registers[y] & 0xFF -- Y coordinate, ensuring it’s within 0-255
+    self.registers[0xF] = 0 -- Reset VF (collision flag)
+
+    for row = 0, n - 1 do
+        -- Read a byte of sprite data
+        local spriteByte = self.memory:readByte(self.regI + row)
+        
+        for col = 0, 7 do -- Each byte has 8 bits representing 8 pixels in a row
+            local pixelX = (startX + col) % 64 -- Wrap around horizontally
+            local pixelY = (startY + row) % 32 -- Wrap around vertically
+
+            -- Get the bit in the current sprite byte. Shift right by (7 - col) to get the current bit.
+            local spritePixel = (spriteByte >> (7 - col)) & 1
+
+            -- Check if the current display pixel is on and a sprite pixel is also on (XOR collision)
+            if spritePixel == 1 and self.memory.displayBuffer[pixelY * 64 + pixelX] == 1 then
+                self.registers[0xF] = 1 -- Set collision flag (VF) to 1 if there's a collision
+            end
+
+            -- XOR the sprite pixel onto the display
+            self.memory.displayBuffer[pixelY * 64 + pixelX] = self.memory.displayBuffer[pixelY * 64 + pixelX] ~ spritePixel
+        end
+    end
+    self.PC = self.PC + 2
 end
+
+-- function Cpu:decodeD(nnn, x, y)
+--     -- Need to implement stil. Is used for writing to screen and stuff 
+
+-- end
 
 function Cpu:decodeE(nnn, x, y, kk)
     -- need to implement key logic eventually 

@@ -1,12 +1,21 @@
+
+
 -- Define the Memory class
 Memory = {}
 Memory.__index = Memory
+
 
 -- Constructor to create a new memory instance
 function Memory:new(size)
     local instance = setmetatable({}, Memory) -- Essentially an array
     instance.size = size or 4096 -- default size (4096bytes)
+    instance.displayBuffer = {} -- Our display buffer 
     instance.data = {} -- Table to store bytes
+
+
+    for i = 1, 64 * 32 do
+        instance.displayBuffer[i] = 0
+    end
     
     -- Initialize memory to zero
     for i = 0, instance.size - 1 do
@@ -54,6 +63,10 @@ function Memory:loadData(startAddress, data)
         end
         self.data[address] = data[i] & 0xFF -- Ensure only 8 bits are stored
     end
+end
+
+function Memory:getDisplayBuffer()
+    return self.displayBuffer;
 end
 
 function Memory:loadFont()

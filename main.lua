@@ -1,32 +1,4 @@
--- -- main.lua
--- local circle = {
---     x = 100,
---     y = 100,
---     radius = 20,
---     speed = 100
--- }
 
--- function love.load()
---     love.window.setTitle("LÖVE Test - Moving Circle")
---     love.graphics.setBackgroundColor(0.1, 0.1, 0.1)
--- end
-
--- function love.update(dt)
---     -- Move the circle to the right
---     circle.x = circle.x + circle.speed * dt
-    
---     -- Bounce back when it reaches the edge
---     if circle.x > love.graphics.getWidth() - circle.radius or circle.x < circle.radius then
---         circle.speed = -circle.speed
---     end
--- end
-
--- function love.draw()
---     love.graphics.setColor(0, 1, 0)  -- Set color to green
---     love.graphics.circle("fill", circle.x, circle.y, circle.radius)
--- end
-
--- Testing the Memory class
 local Chip8 = require("CHIP8.chip8")
 
 -- Get the file path from the command-line argument
@@ -53,4 +25,7 @@ while true do
 
     -- Optional: Sleep to simulate the clock speed
     os.execute("sleep " .. delay)
+
+    c8:updateDisplay()
 end
+
