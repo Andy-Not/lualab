@@ -1,7 +1,4 @@
--- Define the CPU class
-local Memory = require("CHIP8.memory")
-local Uint = require("../UINT.uint")
-
+-- Defining the CPU class
 Cpu = {}
 Cpu.__index = Cpu
 

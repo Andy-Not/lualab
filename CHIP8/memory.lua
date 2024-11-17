@@ -1,6 +1,4 @@
-
-
--- Define the Memory class
+-- Defining the Memory class
 Memory = {}
 Memory.__index = Memory
 
