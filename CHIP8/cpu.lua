@@ -73,22 +73,6 @@ end
 
 -- OPCODE IMPLEMENTATION BELOW -- 
 
--- Begins the decode process of decoding the opcodes. 
--- function Cpu:decode()
---     -- Correctly read two bytes and combine them into a 16-bit instruction
---     local highByte = self.memory:readByte(self.PC)
---     local lowByte = self.memory:readByte(self.PC + 1)
---     local instruction = (highByte << 8) | lowByte  -- Combine to form 16-bit instruction
-
---     -- Extract opcode components
---     local n = (instruction >> 12) & 0x0F
---     local nnn = instruction & 0x0FFF
---     local x = (instruction >> 8) & 0x0F
---     local y = (instruction >> 4) & 0x0F
---     local kk = instruction & 0x00FF
---     self:processOpcode(n, nnn, x, y, kk)
-
--- end
 
 function Cpu:decode()
     -- Correctly read two bytes and combine them into a 16-bit instruction
@@ -221,20 +205,6 @@ function Cpu:decodeEight(nnn, x, y)
         return
     end
 
-    -- -- handles overflow 
-    -- if lastFourBits == 0x4 then -- 8xy4
-    --     local vx  = self.registers[x] & 0xFF
-    --     local vy = self.registers[y] & 0xFF
-    --     local result = vx + vy
-
-    --     -- set the carry flag (reg F) if the result is > 255 otherwise set it to 0
-    --     if (result > 255) then self.registers[0xF] = 1 else self.registers[0xF] = 0 end
-
-    --     self.registers[x] = result & 0xFF
-    --     self.PC = self.PC + 2
-    --     return
-    -- end
-
     if lastFourBits == 0x4 then -- 8xy4
         local vx  = self.registers[x] & 0xFF
         local vy = self.registers[y] & 0xFF
@@ -259,20 +229,6 @@ function Cpu:decodeEight(nnn, x, y)
         return
     end
 
-    -- -- handles overflow
-    -- if lastFourBits == 0x5 then -- 8xy5
-    --    if (self.registers[x] > self.registers[y]) then 
-    --         self.registers[0xF] = 1 
-    --         self.registers[x] = self.registers[x] - self.registers[y]
-    --         self.PC = self.PC + 2
-    --         return
-    --     end
-    --     self.registers[0xF] = 0
-    --     self.registers[x] = self.registers[x] - self.registers[y]
-    --     self.PC = self.PC + 2
-    --     return
-    -- end
-
     if lastFourBits == 0x6 then -- 8xy6
         -- Set VF to the least significant bit of reg x
         self.registers[0xF] = self.registers[x] & 1  -- Get the LSB of Vx directly
@@ -283,26 +239,6 @@ function Cpu:decodeEight(nnn, x, y)
         self.PC = self.PC + 2
         return
     end
-
-    -- if lastFourBits == 0x6 then -- 8xy6
-    --     -- Set VF to the least significant bit of Vx
-    --     self.registers[0xF] = self.registers[x] % 2  -- Get LSB of Vx
-    
-    --     -- Shift Vx to the right by 1 using integer division
-    --     self.registers[x] = (self.registers[x] - self.registers[x] % 2) / 2
-        
-    --     -- Advance the program counter
-    --     self.PC = self.PC + 2
-    --     return
-    -- end
-
-    -- if lastFourBits == 0x7 then -- 8xy7
-    --     if self.registers[y] > self.registers[x] then self.registers[0xF] = 1
-    --     else self.registers[0xF] = 0 end
-    --     self.registers[x] = self.registers[y] - self.registers[x]
-    --     self.PC = self.PC + 2
-    --     return
-    -- end
 
     if lastFourBits == 0x7 then -- 8xy7
         -- Set VF to 0 if there is a borrow (if Vy < Vx), else set it to 1
@@ -343,14 +279,6 @@ function Cpu:decodeNine(x, y)
         self.PC = self.PC + 2
     end
 end
-
--- function Cpu:decodeNine(x, y) -- 0x9xy0
---     if self.registers[x] ~= self.registers[y] then
---         self.PC = self.PC + 4 
---         return
---     end
---     self.PC = self.PC + 2
--- end
 
 function Cpu:decodeA(nnn)
     self.regI = nnn
@@ -410,13 +338,6 @@ function Cpu:decodeD(nnn, x, y)
 
     self.PC = self.PC + 2
 end
-
-
-
--- function Cpu:decodeD(nnn, x, y)
---     -- Need to implement stil. Is used for writing to screen and stuff 
-
--- end
 
 function Cpu:decodeE(nnn, x, y, kk)
     -- need to implement key logic eventually 
