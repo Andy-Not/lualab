@@ -2,8 +2,6 @@ package.path = "./CHIP8/dkjson/?.lua;./CHIP8/?.lua;/Users/nicholasgarman/.luaroc
 package.cpath = "/Users/nicholasgarman/.luarocks/lib/lua/5.3/?.so;" .. package.cpath
 
 json = require ("dkjson")
-local Memory = require("CHIP8.memory")
-local Cpu = require("CHIP8.cpu")
 local http_request = require("http.request")
 print("Package path: " .. package.path)
 
