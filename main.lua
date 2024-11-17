@@ -9,7 +9,7 @@ end
 
 -- Create a new Chip8 instance with the specified file path
 local c8 = Chip8:new(filePath)
-c8:loadProgram()
+c8:loadProgramFromFile()
 
 -- Define a clock speed, e.g., 500 cycles per second
 local clockSpeed = 400  -- Adjust this value as needed

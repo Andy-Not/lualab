@@ -2,14 +2,12 @@
 Memory = {}
 Memory.__index = Memory
 
-
 -- Constructor to create a new memory instance
 function Memory:new(size)
     local instance = setmetatable({}, Memory) -- Essentially an array
     instance.size = size or 4096 -- default size (4096bytes)
     instance.displayBuffer = {} -- Our display buffer 
     instance.data = {} -- Table to store bytes
-
 
     for i = 1, 64 * 32 do
         instance.displayBuffer[i] = 0

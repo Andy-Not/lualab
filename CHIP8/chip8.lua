@@ -30,7 +30,7 @@ function Chip8:getDisplayBuffer()
     return self.memory.getDisplayBuffer()
 end
 
-function Chip8:loadProgram()
+function Chip8:loadProgramFromFile()
     local file = io.open(self.filePath, "rb")
     if not file then
         error("Could not open file: " .. tostring(self.filePath))
@@ -38,18 +38,23 @@ function Chip8:loadProgram()
     end
 
     local programData = file:read("*a")
+    file:close()
+
     if not programData then
-        error("Failed to read program data from file: " .. tostring(self.filePath))
-        file:close()
+        error("Failed to read program data")
         return
     end
 
-    for i = 1, #programData do
-        self.memory:writeByte(0x200 + i - 1, programData:byte(i))
-    end
-
-    file:close()
+    self:loadProgram(programData, 1) -- Start loading at index 1
 end
+
+
+function Chip8:loadProgram(program, startingIndex)
+    if startingIndex > #program then return end -- base case
+    self.memory:writeByte(0x200 + startingIndex - 1, program:byte(startingIndex))
+    self:loadProgram(program, startingIndex + 1)
+end
+
 
 -- function Chip8:loadProgram()
 --     local file = io.open(self.filePath, "rb")
@@ -85,10 +90,6 @@ function Chip8:updateDisplay()
         print("Display buffer is empty or nil")
     end
 end
-
-
-
--- local json = require("json")  -- You may need to install a JSON library for Lua
 
 -- Function to send display buffer to Flask server
 function Chip8:sendDisplayBuffer()

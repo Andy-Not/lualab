@@ -2,6 +2,7 @@
 Cpu = {}
 Cpu.__index = Cpu
 
+-- Constructor to create a new CPU instance
 function Cpu:new(memory)
     local instance = setmetatable({}, Cpu)
     instance.memory = memory -- Assign memory or create new Memory instance
