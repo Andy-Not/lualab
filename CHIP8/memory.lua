@@ -65,7 +65,7 @@ function Memory:getDisplayBuffer()
     return self.displayBuffer;
 end
 
-function Memory:clearDisplay()
+function Memory:clearDisplay() 
     for i = 1, #self.displayBuffer do
         self.displayBuffer[i] = 0
     end

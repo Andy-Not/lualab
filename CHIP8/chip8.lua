@@ -48,24 +48,11 @@ function Chip8:loadProgramFromFile()
     self:loadProgram(programData, 1) -- Start loading at index 1
 end
 
-
 function Chip8:loadProgram(program, startingIndex)
     if startingIndex > #program then return end -- base case
     self.memory:writeByte(0x200 + startingIndex - 1, program:byte(startingIndex))
     self:loadProgram(program, startingIndex + 1)
 end
-
-
--- function Chip8:loadProgram()
---     local file = io.open(self.filePath, "rb")
---     if file then
---         local programData = file:read("*a")
---         for i = 1, #programData, 1 do
---             self.memory:writeByte(0x200 + i - 1, programData:byte(i))
---         end
---         file:close()
---     end
--- end
 
 function Chip8:getCycles()
     return self.cpu:getCycles()
